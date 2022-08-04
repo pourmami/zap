@@ -28,6 +28,11 @@ limitations under the License.
             icon="mdi-file-document-edit-outline"
             label="Generation"
           />
+          <q-tab
+            name="file"
+            icon="folder"
+            label="File menu"
+          />
         </q-tabs>
       </template>
 
@@ -50,6 +55,10 @@ limitations under the License.
           <q-tab-panel name="gen">
             <PreferenceGeneration />
           </q-tab-panel>
+
+          <q-tab-panel name="file">
+            <PreferenceFileMenu />
+          </q-tab-panel>
         </q-tab-panels>
       </template>
     </q-splitter>
@@ -59,12 +68,14 @@ limitations under the License.
 import PreferencePackage from './PreferencePackage.vue'
 import PreferenceGeneration from './PreferenceGeneration.vue'
 import PreferenceUser from './PreferenceUser.vue'
+import PreferenceFileMenu from './PreferenceFileMenu.vue'
 export default {
   name: 'Preference',
   components: {
     PreferencePackage,
     PreferenceGeneration,
     PreferenceUser,
+    PreferenceFileMenu,
   },
   data() {
     return {
@@ -72,5 +83,8 @@ export default {
       splitterModel: 20,
     }
   },
+  created(){
+    console.log("window.mmd",window.mmd);
+  }
 }
 </script>

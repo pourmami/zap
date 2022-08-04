@@ -36,8 +36,11 @@ const asyncValidation = require('../validation/async-validation.js')
 const validation = require('../validation/validation.js')
 const restApi = require('../../src-shared/rest-api.js')
 const zclLoader = require('../zcl/zcl-loader.js')
+const uiJs = require('../ui/ui-util')
 const dbEnum = require('../../src-shared/db-enum.js')
 const { StatusCodes } = require('http-status-codes')
+const { app } = require('electron')
+const bw = require('electron').BrowserWindow;
 
 /**
  * HTTP GET: session key values
@@ -305,6 +308,72 @@ function httpPostEventUpdate(db) {
       side: eventSide,
       clusterRef: clusterRef,
     })
+  }
+}
+
+/**
+ * HTTP POST: initial state
+ *
+ * @returns callback for open new configuration
+ */
+function openNewConfiguration() {
+  return async (request, response) => {
+    uiJs.openNewConfiguration(request.socket.localPort)
+  }
+}
+
+/**
+ * HTTP POST: initial state
+ *
+ * @returns callback for open file
+ */
+function openFile() {
+  return async (request, response) => {
+    uiJs.doOpen(bw.getFocusedWindow(), request.socket.localPort)
+  }
+}
+
+/**
+ * HTTP POST: initial state
+ *
+ * @returns callback for open file
+ */
+function save() {
+  return async (request, response) => {
+    uiJs.doSave(bw.getFocusedWindow())
+  }
+}
+
+/**
+ * HTTP POST: initial state
+ *
+ * @returns callback for open file
+ */
+function saveAs() {
+  return async (request, response) => {
+    uiJs.doOpen(bw.getFocusedWindow())
+  }
+}
+
+/**
+ * HTTP POST: initial state
+ *
+ * @returns callback for quit the Application
+ */
+function closeWindow() {
+  return async (request, response) => {
+    bw.getFocusedWindow().close()
+  }
+}
+
+/**
+ * HTTP POST: initial state
+ *
+ * @returns callback for quit the Application
+ */
+function quitApplication() {
+  return async (request, response) => {
+    app.exit(0);
   }
 }
 
@@ -701,6 +770,30 @@ function httpDeleteSessionPackage(db) {
 }
 
 exports.post = [
+  {
+    uri: restApi.uri.openNewConfiguration,
+    callback: openNewConfiguration,
+  },
+  {
+    uri: restApi.uri.openFile,
+    callback: openFile,
+  },
+  {
+    uri: restApi.uri.save,
+    callback: save,
+  },
+  {
+    uri: restApi.uri.saveAs,
+    callback: saveAs,
+  },
+  {
+    uri: restApi.uri.closeWindow,
+    callback: closeWindow,
+  },
+  {
+    uri: restApi.uri.quitApplication,
+    callback: quitApplication,
+  },
   {
     uri: restApi.uri.cluster,
     callback: httpPostCluster,

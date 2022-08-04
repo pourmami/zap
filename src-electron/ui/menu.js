@@ -42,20 +42,20 @@ const template = (httpPort) => [
         accelerator: 'CmdOrCtrl+O',
         httpPort: httpPort,
         click(menuItem, browserWindow, event) {
-          doOpen(browserWindow, menuItem.httpPort)
+          uiJs.doOpen(browserWindow, menuItem.httpPort)
         },
       },
       {
         label: 'Save',
         accelerator: 'CmdOrCtrl+S',
         click(menuItem, browserWindow, event) {
-          doSave(browserWindow)
+          uiJs.doSave(browserWindow)
         },
       },
       {
         label: 'Save As...',
         click(menuItem, browserWindow, event) {
-          doSaveAs(browserWindow)
+          uiJs.doSaveAs(browserWindow)
         },
       },
       {
@@ -211,129 +211,6 @@ async function getUserSessionInfoMessage(browserWindow) {
   Browser session UUID: ${sessionUuid}
   Browser user key: ${userKey}
   `
-}
-
-/**
- * Perform a file->open operation.
- *
- * @param {*} menuItem
- * @param {*} browserWindow
- * @param {*} event
- */
-function doOpen(browserWindow, httpPort) {
-  browserApi
-    .execRendererApi(
-      browserWindow,
-      rendApi.id.getStorageItem,
-      rendApi.storageKey.fileSave
-    )
-    .then((filePath) => {
-      let opts = {
-        title: 'Select ZAP or ISC file to load.',
-        properties: ['openFile', 'multiSelections'],
-      }
-      if (filePath != null) {
-        opts.defaultPath = filePath
-      }
-      return dialog.showOpenDialog(browserWindow, opts)
-    })
-    .then((result) => {
-      if (!result.canceled) {
-        fileOpen(result.filePaths, httpPort)
-        browserApi.execRendererApi(
-          browserWindow,
-          rendApi.id.setStorageItem,
-          rendApi.storageKey.fileSave,
-          result.filePaths[0]
-        )
-      }
-    })
-    .catch((err) => uiJs.showErrorMessage('Open file', err))
-}
-
-/**
- * Perform a save, defering to save as if file is not yet selected.
- *
- * @param {*} browserWindow
- */
-function doSave(browserWindow) {
-  if (browserWindow.getTitle().includes(newConfiguration)) {
-    doSaveAs(browserWindow)
-  } else {
-    fileSave(browserWindow, null)
-  }
-}
-
-/**
- * Perform save as.
- *
- * @param {*} menuItem
- * @param {*} browserWindow
- * @param {*} event
- */
-function doSaveAs(browserWindow) {
-  browserApi
-    .execRendererApi(
-      browserWindow,
-      rendApi.id.getStorageItem,
-      rendApi.storageKey.fileSave
-    )
-    .then((filePath) => {
-      let opts = {
-        filters: [
-          { name: 'ZAP Config', extensions: ['zap'] },
-          { name: 'All Files', extensions: ['*'] },
-        ],
-      }
-      if (filePath != null) {
-        opts.defaultPath = filePath
-      }
-      return dialog.showSaveDialog(opts)
-    })
-    .then((result) => {
-      if (!result.canceled) {
-        fileSave(browserWindow, result.filePath)
-        return result.filePath
-      } else {
-        return null
-      }
-    })
-    .then((filePath) => {
-      if (filePath != null) {
-        browserWindow.setTitle(filePath)
-        browserApi.execRendererApi(
-          browserWindow,
-          rendApi.id.setStorageItem,
-          rendApi.storageKey.fileSave,
-          filePath
-        )
-      }
-    })
-    .catch((err) => uiJs.showErrorMessage('Save file', err))
-}
-
-/**
- * perform the save.
- *
- * @param {*} db
- * @param {*} browserWindow
- * @param {*} filePath
- * @returns Promise of saving.
- */
-function fileSave(browserWindow, filePath) {
-  browserApi.execRendererApi(browserWindow, rendApi.id.save, filePath)
-}
-
-/**
- * Perform the do open action, possibly reading in multiple files.
- *
- * @param {*} db
- * @param {*} filePaths
- */
-function fileOpen(filePaths, httpPort) {
-  filePaths.forEach((filePath) => {
-    uiJs.openFileConfiguration(filePath, httpPort)
-  })
 }
 
 function showMenu(httpPort) {

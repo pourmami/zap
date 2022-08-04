@@ -294,6 +294,36 @@ export function setDeviceTypeReference(context, endpointIdDeviceTypeRefPair) {
   context.commit('setDeviceTypeReference', endpointIdDeviceTypeRefPair)
 }
 
+export function openNewConfiguration(){
+  return Vue.prototype
+    .$serverPost(restApi.uri.openNewConfiguration)
+}
+
+export function openFile(){
+  return Vue.prototype
+    .$serverPost(restApi.uri.openFile)
+}
+
+export function save(){
+  return Vue.prototype
+    .$serverPost(restApi.uri.save)
+}
+
+export function saveAs(){
+  return Vue.prototype
+    .$serverPost(restApi.uri.saveAs)
+}
+
+export function closeWindow(){
+  return Vue.prototype
+    .$serverPost(restApi.uri.closeWindow)
+}
+
+export function quitApplication(){
+  return Vue.prototype
+    .$serverPost(restApi.uri.quitApplication)
+}
+
 export function updateEndpoint(context, endpoint) {
   Vue.prototype.$serverPatch(restApi.uri.endpoint, endpoint).then((res) => {
     let arg = res.data

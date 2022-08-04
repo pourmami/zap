@@ -14,13 +14,15 @@
  *    See the License for the specific language governing permissions and
  *    limitations under the License.
  */
-import { dialog } from 'electron'
+import { BrowserWindow, dialog, OpenDialogOptions, SaveDialogOptions } from 'electron'
 import * as window from './window'
 import browserApi from './browser-api.js'
 import * as uiTypes from '../../src-shared/types/ui-types'
 import { WindowCreateArgs } from 'types/window-types'
 import * as util from '../util/util'
+const rendApi = require('../../src-shared/rend-api.js')
 import * as args from '../util/args'
+const newConfiguration = 'New Configuration'
 
 /**
  * Simple dialog to show error messages from electron renderer scope.
@@ -69,6 +71,131 @@ async function openNewConfiguration(
 ) {
   window.windowCreate(httpPort, options)
 }
+
+/**
+ * Perform a file->open operation.
+ *
+ * @param {*} menuItem
+ * @param {*} browserWindow
+ * @param {*} event
+ */
+ function doOpen(browserWindow : BrowserWindow, httpPort : number) {
+  browserApi
+    .execRendererApi(
+      browserWindow,
+      rendApi.id.getStorageItem,
+      rendApi.storageKey.fileSave
+    )
+    .then((filePath) => {
+      let opts : OpenDialogOptions = {
+        defaultPath: '',
+        title: 'Select ZAP or ISC file to load.',
+        properties: ['openFile', 'multiSelections'],
+      }
+      if (filePath != null) {
+        opts.defaultPath = filePath
+      }
+      return dialog.showOpenDialog(browserWindow, opts)
+    })
+    .then((result) => {
+      if (!result.canceled) {
+        fileOpen(result.filePaths, httpPort)
+        browserApi.execRendererApi(
+          browserWindow,
+          rendApi.id.setStorageItem,
+          rendApi.storageKey.fileSave,
+          result.filePaths[0]
+        )
+      }
+    })
+    .catch((err) => showErrorMessage('Open file', err))
+}
+
+/**
+ * Perform a save, defering to save as if file is not yet selected.
+ *
+ * @param {*} browserWindow
+ */
+ function doSave(browserWindow : BrowserWindow) {
+  if (browserWindow.getTitle().includes(newConfiguration)) {
+    doSaveAs(browserWindow)
+  } else {
+    fileSave(browserWindow, null)
+  }
+}
+
+/**
+ * Perform save as.
+ *
+ * @param {*} menuItem
+ * @param {*} browserWindow
+ * @param {*} event
+ */
+ function doSaveAs(browserWindow: BrowserWindow) {
+  browserApi
+    .execRendererApi(
+      browserWindow,
+      rendApi.id.getStorageItem,
+      rendApi.storageKey.fileSave
+    )
+    .then((filePath) => {
+      let opts: SaveDialogOptions = {
+        filters: [
+          { name: 'ZAP Config', extensions: ['zap'] },
+          { name: 'All Files', extensions: ['*'] },
+        ],
+      }
+      if (filePath != null) {
+        opts.defaultPath = filePath
+      }
+      return dialog.showSaveDialog(opts)
+    })
+    .then((result) => {
+      if (!result.canceled) {
+        fileSave(browserWindow, result.filePath)
+        return result.filePath
+      } else {
+        return null
+      }
+    })
+    .then((filePath) => {
+      if (filePath != null) {
+        browserWindow.setTitle(filePath)
+        browserApi.execRendererApi(
+          browserWindow,
+          rendApi.id.setStorageItem,
+          rendApi.storageKey.fileSave,
+          filePath
+        )
+      }
+    })
+    .catch((err) => showErrorMessage('Save file', err))
+}
+
+/**
+ * perform the save.
+ *
+ * @param {*} db
+ * @param {*} browserWindow
+ * @param {*} filePath
+ * @returns Promise of saving.
+ */
+function fileSave(browserWindow: BrowserWindow, filePath: string | undefined | null) {
+  browserApi.execRendererApi(browserWindow, rendApi.id.save, filePath)
+}
+
+/**
+ * Perform the do open action, possibly reading in multiple files.
+ *
+ * @param {*} db
+ * @param {*} filePaths
+ */
+ function fileOpen(filePaths: string[], httpPort: number) {
+  filePaths.forEach((filePath) => {
+    openFileConfiguration(filePath, httpPort)
+  })
+}
+
 
 /**
  * Toggles the dirty flag.
@@ -143,6 +270,9 @@ function enableUi(
 }
 
 exports.showErrorMessage = showErrorMessage
+exports.doOpen = doOpen
+exports.doSave = doSave
+exports.doSaveAs = doSaveAs
 exports.openFileConfiguration = openFileConfiguration
 exports.openNewConfiguration = openNewConfiguration
 exports.toggleDirtyFlag = toggleDirtyFlag

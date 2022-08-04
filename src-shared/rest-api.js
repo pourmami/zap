@@ -56,6 +56,12 @@ const uri = {
   deviceTypeAttributes: '/zcl/deviceTypeAttributes/',
   deviceTypeCommands: '/zcl/deviceTypeCommands/',
   deviceTypeEvents: '/zcl/deviceTypeEvents/',
+  quitApplication: '/quitApplication',
+  openNewConfiguration: '/openNewConfiguration',
+  openFile: '/openFile',
+  save: '/save',
+  saveAs: '/saveAs',
+  closeWindow: '/closeWindow',
 }
 
 const uiMode = {
