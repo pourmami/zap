@@ -520,6 +520,47 @@ async function insertEndpointType(
 }
 
 /**
+* Promises to duplicate an endpoint type.
+*
+* @export
+* @param {*} db
+* @param {*} endpointTypeId
+* @returns Promise to duplicate endpoint type.
+*/
+async function duplicateEndpointType(
+  db, 
+  endpointTypeId
+  ) {
+  let newEndpointTypeId = await dbApi.dbInsert(
+    db,
+    `INSERT INTO ENDPOINT_TYPE (SESSION_REF, NAME, DEVICE_TYPE_REF)
+    select SESSION_REF, NAME, DEVICE_TYPE_REF
+    from ENDPOINT_TYPE
+    where ENDPOINT_TYPE_ID = ?`,
+    [endpointTypeId]
+  )
+
+  let rows = await dbApi.dbAll(
+    db,
+    `SELECT * FROM ENDPOINT_TYPE
+    WHERE ENDPOINT_TYPE_ID = ?`,
+    [newEndpointTypeId]
+  )
+  rows = rows.map(dbMapping.map.endpointType)
+  
+  await setEndpointDefaults(
+    db,
+    rows[0].sessionRef,
+    rows[0].endpointTypeId,
+    rows[0].deviceTypeRef
+  )
+
+  return newEndpointTypeId
+}
+
+exports.duplicateEndpointType = duplicateEndpointType
+
+/**
  * Promise to update a an endpoint type.
  * @param {*} db
  * @param {*} sessionId
@@ -1114,14 +1155,14 @@ ORDER BY
 }
 
 /**
- * Sets a given cluster to be included on a given endpoint.
- *
- * @param {*} db
- * @param {*} packageId
- * @param {*} clusterCode
- * @param {*} isIncluded
- * @param {*} side
- */
+* Sets a given cluster to be included on a given endpoint.
+*
+* @param {*} db
+* @param {*} packageId
+* @param {*} clusterCode
+* @param {*} isIncluded
+* @param {*} side
+*/
 async function setClusterIncluded(
   db,
   packageId,

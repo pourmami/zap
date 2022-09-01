@@ -697,6 +697,42 @@ function httpDeleteSessionPackage(db) {
   }
 }
 
+function httpPostDuplicateEndpoint(db) {
+  return async (req, res) => {
+    let endpointId = req.body.id
+    let endpointIdentifier = req.body.endpointIdentifier
+    let endpointTypeId = req.body.endpointTypeId
+    try {
+      let id = await queryEndpoint.duplicateEndpoint(
+        db,
+        endpointId,
+        endpointIdentifier,
+        endpointTypeId
+      )
+      res.status(StatusCodes.OK).json({id:id})
+    } catch (err) {
+      res.status(StatusCodes.INTERNAL_SERVER_ERROR).json(err)
+    }
+  }
+}
+
+function httpPostDuplicateEndpointType(db) {
+return async (request, response) => {
+  let { endpointTypeId } = request.body
+  try {
+    let newId = await queryConfig.duplicateEndpointType(
+      db, endpointTypeId
+    )
+
+    response.status(StatusCodes.OK).json({
+      id: newId
+    })
+  } catch (err) {
+    response.status(StatusCodes.INTERNAL_SERVER_ERROR).json(err)
+  }
+}
+}
+
 exports.post = [
   {
     uri: restApi.uri.cluster,
@@ -725,6 +761,14 @@ exports.post = [
   {
     uri: restApi.uri.shareClusterStatesAcrossEndpoints,
     callback: httpPostShareClusterStatesAcrossEndpoints,
+  },
+  {
+    uri: restApi.uri.duplicateEndpoint,
+    callback: httpPostDuplicateEndpoint,
+  },
+  {
+    uri: restApi.uri.duplicateEndpointType,
+    callback: httpPostDuplicateEndpointType,
   },
 ]
 
